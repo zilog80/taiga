@@ -36,6 +36,10 @@
 #include "ui/dlg/dlg_anime_info.h"
 #include "ui/dialog.h"
 #include "ui/ui.h"
+#include "track/stream_provider_parser.h"
+
+
+using namespace Track;
 
 class MediaPlayers MediaPlayers;
 
@@ -77,17 +81,16 @@ bool MediaPlayers::Load() {
     }
   }
 
-  return true;
+  return m_streamProviderFactory.loadPrototypes();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 MediaPlayer* MediaPlayers::FindPlayer(const std::wstring& name) {
-  if (!name.empty())
-    foreach_(item, items)
-      if (item->name == name)
-        return &(*item);
-
+	if (!name.empty()) {
+		auto it = std::find_if(items.begin(), items.end(), [&](const MediaPlayer& mp) {return mp.name == name; });
+		return &*it;
+	}
   return nullptr;
 }
 
@@ -454,4 +457,9 @@ std::wstring MediaPlayers::GetTitleFromMPlayer() {
   }
 
   return title;
+}
+
+const Track::StreamProviderParserFactory& MediaPlayers::GetStreamProviderParserFactory() const
+{
+	return m_streamProviderFactory;
 }

@@ -61,6 +61,8 @@
       <ObjectFileName>$(IntDir)\x\x\%(RelativeDir)</ObjectFileName>
       <AdditionalIncludeDirectories>..\..\deps\src;..\..\src</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -136,6 +138,7 @@
     <ClCompile Include="..\..\src\base\gfx.cpp" />
     <ClCompile Include="..\..\src\base\gzip.cpp" />
     <ClCompile Include="..\..\src\base\html.cpp" />
+    <ClCompile Include="..\..\src\base\html_fetch.cpp" />
     <ClCompile Include="..\..\src\base\http.cpp" />
     <ClCompile Include="..\..\src\base\http_callback.cpp" />
     <ClCompile Include="..\..\src\base\http_request.cpp" />
@@ -187,6 +190,7 @@
     <ClCompile Include="..\..\src\track\feed.cpp" />
     <ClCompile Include="..\..\src\track\feed_filter.cpp" />
     <ClCompile Include="..\..\src\track\media.cpp" />
+    <ClCompile Include="..\..\src\track\stream_provider_parser.cpp" />
     <ClCompile Include="..\..\src\track\media_stream.cpp" />
     <ClCompile Include="..\..\src\track\monitor.cpp" />
     <ClCompile Include="..\..\src\track\recognition.cpp" />
@@ -290,6 +294,7 @@
     <ClInclude Include="..\..\src\base\gfx.h" />
     <ClInclude Include="..\..\src\base\gzip.h" />
     <ClInclude Include="..\..\src\base\html.h" />
+    <ClInclude Include="..\..\src\base\html_fetch.h" />
     <ClInclude Include="..\..\src\base\http.h" />
     <ClInclude Include="..\..\src\base\json.h" />
     <ClInclude Include="..\..\src\base\log.h" />
@@ -342,6 +347,7 @@
     <ClInclude Include="..\..\src\track\feed.h" />
     <ClInclude Include="..\..\src\track\feed_filter.h" />
     <ClInclude Include="..\..\src\track\media.h" />
+    <ClInclude Include="..\..\src\track\stream_provider_parser.h" />
     <ClInclude Include="..\..\src\track\monitor.h" />
     <ClInclude Include="..\..\src\track\recognition.h" />
     <ClInclude Include="..\..\src\track\search.h" />

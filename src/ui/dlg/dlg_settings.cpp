@@ -28,9 +28,12 @@
 #include "taiga/taiga.h"
 #include "track/media.h"
 #include "track/monitor.h"
+#include "track/stream_provider_parser.h"
 #include "ui/dlg/dlg_settings.h"
 #include "ui/theme.h"
 #include "win/win_taskdialog.h"
+
+using namespace Track;
 
 namespace ui {
 
@@ -262,13 +265,9 @@ void SettingsDialog::OnOK() {
   page = &pages[kSettingsPageRecognitionStream];
   if (page->IsWindow()) {
     list.SetWindowHandle(page->GetDlgItem(IDC_LIST_STREAM_PROVIDER));
-    Settings.Set(taiga::kStream_Animelab, list.GetCheckState(0) == TRUE);
-    Settings.Set(taiga::kStream_Ann, list.GetCheckState(1) == TRUE);
-    Settings.Set(taiga::kStream_Crunchyroll, list.GetCheckState(2) == TRUE);
-    Settings.Set(taiga::kStream_Daisuki, list.GetCheckState(3) == TRUE);
-    Settings.Set(taiga::kStream_Veoh, list.GetCheckState(4) == TRUE);
-    Settings.Set(taiga::kStream_Viz, list.GetCheckState(5) == TRUE);
-    Settings.Set(taiga::kStream_Youtube, list.GetCheckState(6) == TRUE);
+	auto providers = MediaPlayers.GetStreamProviderParserFactory().getAllStreamProviderParserPrototypes();
+	for (size_t i = 0; i < providers.size(); i++)
+		providers[i]->setEnabled(list.GetCheckState(i));
     list.SetWindowHandle(nullptr);
   }
 

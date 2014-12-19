@@ -22,19 +22,9 @@
 #include "library/anime_episode.h"
 #include "taiga/settings.h"
 #include "track/media.h"
+#include "track/stream_provider_parser.h"
 
-enum StreamingVideoProvider {
-  kStreamUnknown = -1,
-  kStreamFirst,
-  kStreamAnimelab = kStreamFirst,
-  kStreamAnn,
-  kStreamCrunchyroll,
-  kStreamDaisuki,
-  kStreamVeoh,
-  kStreamViz,
-  kStreamYoutube,
-  kStreamLast
-};
+using namespace Track;
 
 enum WebBrowserEngine {
   kWebEngineUnknown = -1,
@@ -172,240 +162,126 @@ bool MediaPlayers::BrowserAccessibleObject::AllowChildTraverse(
 ////////////////////////////////////////////////////////////////////////////////
 
 std::wstring MediaPlayers::GetTitleFromBrowser(HWND hwnd) {
-  WebBrowserEngine web_engine = kWebEngineUnknown;
+	WebBrowserEngine web_engine = kWebEngineUnknown;
 
-  auto media_player = FindPlayer(current_player());
+	auto media_player = FindPlayer(current_player());
 
-  // Get window title
-  std::wstring title = GetWindowTitle(hwnd);
-  EditTitle(title, media_player);
+	// Get window title
 
-  // Return current title if the same web page is still open
-  if (CurrentEpisode.anime_id > 0)
-    if (InStr(title, current_title()) > -1)
-      return current_title();
+	std::wstring currentWindowTitle = GetWindowTitle(hwnd);
+	static std::wstring lastWindowTitle = L"";
 
-  // Delay operation to save some CPU
-  static int counter = 0;
-  if (counter < 5) {
-    counter++;
-    return current_title();
-  } else {
-    counter = 0;
-  }
+	if (lastWindowTitle == currentWindowTitle)
+		return current_title();
+	else
+		lastWindowTitle = currentWindowTitle;
 
-  // Select web browser engine
-  if (media_player->engine == L"WebKit") {
-    web_engine = kWebEngineWebkit;
-  } else if (media_player->engine == L"Gecko") {
-    web_engine = kWebEngineGecko;
-  } else if (media_player->engine == L"Trident") {
-    web_engine = kWebEngineTrident;
-  } else if (media_player->engine == L"Presto") {
-    web_engine = kWebEnginePresto;
-  } else {
-    return std::wstring();
-  }
+	// Select web browser engine
+	if (media_player->engine == L"WebKit") {
+		web_engine = kWebEngineWebkit;
+	}
+	else if (media_player->engine == L"Gecko") {
+		web_engine = kWebEngineGecko;
+	}
+	else if (media_player->engine == L"Trident") {
+		web_engine = kWebEngineTrident;
+	}
+	else if (media_player->engine == L"Presto") {
+		web_engine = kWebEnginePresto;
+	}
+	else {
+		return std::wstring();
+	}
 
-  // Build accessibility data
-  acc_obj.children.clear();
-  if (acc_obj.FromWindow(hwnd) == S_OK) {
-    acc_obj.BuildChildren(acc_obj.children, nullptr, web_engine);
-    acc_obj.Release();
-  }
+	// Build accessibility data
+	acc_obj.children.clear();
+	if (acc_obj.FromWindow(hwnd) == S_OK) {
+		acc_obj.BuildChildren(acc_obj.children, nullptr, web_engine);
+		acc_obj.Release();
+	}
 
-  // Check other tabs
-  if (CurrentEpisode.anime_id > 0) {
-    base::AccessibleChild* child = nullptr;
-    switch (web_engine) {
-      case kWebEngineWebkit:
-      case kWebEngineGecko:
-        child = FindAccessibleChild(acc_obj.children,
-                                    L"", ROLE_SYSTEM_PAGETABLIST);
-        break;
-      case kWebEngineTrident:
-        child = FindAccessibleChild(acc_obj.children,
-                                    L"Tab Row", 0);
-        break;
-      case kWebEnginePresto:
-        child = FindAccessibleChild(acc_obj.children,
-                                    L"", ROLE_SYSTEM_CLIENT);
-        break;
-    }
-    if (child) {
-      foreach_(it, child->children) {
-        if (InStr(it->name, current_title()) > -1) {
-          // Tab is still open, just not active
-          return current_title();
-        }
-      }
-    }
-    // Tab is closed
-    return std::wstring();
-  }
+	// Check other tabs
+	if (CurrentEpisode.anime_id > 0) {
+		base::AccessibleChild* child = nullptr;
+		switch (web_engine) {
+		case kWebEngineWebkit:
+		case kWebEngineGecko:
+			child = FindAccessibleChild(acc_obj.children,
+				L"", ROLE_SYSTEM_PAGETABLIST);
+			break;
+		case kWebEngineTrident:
+			child = FindAccessibleChild(acc_obj.children,
+				L"Tab Row", 0);
+			break;
+		case kWebEnginePresto:
+			child = FindAccessibleChild(acc_obj.children,
+				L"", ROLE_SYSTEM_CLIENT);
+			break;
+		}
+		if (child) {
+			foreach_(it, child->children) {
+				if (InStr(it->name, current_title()) > -1) {
+					// Tab is still open, just not active
+					return current_title();
+				}
+			}
+		}
+		// Tab is closed
+		return std::wstring();
+	}
 
-  // Find URL
-  base::AccessibleChild* child = nullptr;
-  switch (web_engine) {
-    case kWebEngineWebkit:
-    case kWebEngineGecko:
-    case kWebEngineTrident: {
-      InitializeBrowserData();
-      auto& child_data = browser_data[web_engine];
-      foreach_(it, child_data) {
-        child = FindAccessibleChild(acc_obj.children, it->name, it->role);
-        if (child)
-          break;
-      }
-      break;
-    }
-    case kWebEnginePresto:
-      child = FindAccessibleChild(acc_obj.children,
-                                  L"", ROLE_SYSTEM_CLIENT);
-      if (child && !child->children.empty()) {
-        child = FindAccessibleChild(child->children.at(0).children,
-                                    L"", ROLE_SYSTEM_TOOLBAR);
-        if (child && !child->children.empty()) {
-          child = FindAccessibleChild(child->children,
-                                      L"", ROLE_SYSTEM_COMBOBOX);
-          if (child && !child->children.empty()) {
-            child = FindAccessibleChild(child->children,
-                                        L"", ROLE_SYSTEM_TEXT);
-          }
-        }
-      }
-      break;
-  }
+	// Find URL
+	base::AccessibleChild* child = nullptr;
+	switch (web_engine) {
+	case kWebEngineWebkit:
+	case kWebEngineGecko:
+	case kWebEngineTrident: {
+		InitializeBrowserData();
+		auto& child_data = browser_data[web_engine];
+		foreach_(it, child_data) {
+			child = FindAccessibleChild(acc_obj.children, it->name, it->role);
+			if (child)
+				break;
+		}
+		break;
+	}
+	case kWebEnginePresto:
+		child = FindAccessibleChild(acc_obj.children,
+			L"", ROLE_SYSTEM_CLIENT);
+		if (child && !child->children.empty()) {
+			child = FindAccessibleChild(child->children.at(0).children,
+				L"", ROLE_SYSTEM_TOOLBAR);
+			if (child && !child->children.empty()) {
+				child = FindAccessibleChild(child->children,
+					L"", ROLE_SYSTEM_COMBOBOX);
+				if (child && !child->children.empty()) {
+					child = FindAccessibleChild(child->children,
+						L"", ROLE_SYSTEM_TEXT);
+				}
+			}
+		}
+		break;
+	}
 
-  if (child) {
-    title = GetTitleFromStreamingMediaProvider(child->value, title);
-  } else {
-    title.clear();
-  }
+	if (child) {
+		std::wstring title = GetTitleFromStreamingMediaProvider(child->value, currentWindowTitle);
+		return title;
+	}
 
-  return title;
-}
-
-bool IsStreamSettingEnabled(StreamingVideoProvider stream_provider) {
-  switch (stream_provider) {
-    case kStreamAnimelab:
-      return Settings.GetBool(taiga::kStream_Animelab);
-    case kStreamAnn:
-      return Settings.GetBool(taiga::kStream_Ann);
-    case kStreamCrunchyroll:
-      return Settings.GetBool(taiga::kStream_Crunchyroll);
-    case kStreamDaisuki:
-      return Settings.GetBool(taiga::kStream_Daisuki);
-    case kStreamVeoh:
-      return Settings.GetBool(taiga::kStream_Veoh);
-    case kStreamViz:
-      return Settings.GetBool(taiga::kStream_Viz);
-    case kStreamYoutube:
-      return Settings.GetBool(taiga::kStream_Youtube);
-  }
-
-  return false;
-}
-
-bool MatchStreamUrl(StreamingVideoProvider stream_provider,
-                    const std::wstring& url) {
-  switch (stream_provider) {
-    case kStreamAnimelab:
-      return InStr(url, L"animelab.com/player/") > -1;
-    case kStreamAnn:
-      return SearchRegex(url, L"animenewsnetwork.com/video/[0-9]+");
-    case kStreamCrunchyroll:
-      return SearchRegex(url, L"crunchyroll\\.[a-z.]+/[^/]+/episode-[0-9]+.*-[0-9]+") ||
-             SearchRegex(url, L"crunchyroll\\.[a-z.]+/[^/]+/.*-movie-[0-9]+");
-    case kStreamDaisuki:
-      return InStr(url, L"daisuki.net/anime/watch/") > -1;
-    case kStreamVeoh:
-      return InStr(url, L"veoh.com/watch/") > -1;
-    case kStreamViz:
-      return SearchRegex(url, L"viz.com/anime/streaming/[^/]+-episode-[0-9]+/") ||
-             SearchRegex(url, L"viz.com/anime/streaming/[^/]+-movie/");
-    case kStreamYoutube:
-      return InStr(url, L"youtube.com/watch") > -1;
-  }
-
-  return false;
-}
-
-void CleanStreamTitle(StreamingVideoProvider stream_provider,
-                      std::wstring& title) {
-  switch (stream_provider) {
-    // AnimeLab
-    case kStreamAnimelab:
-      EraseLeft(title, L"AnimeLab - ");
-      break;
-    // Anime News Network
-    case kStreamAnn:
-      EraseRight(title, L" - Anime News Network");
-      /*
-      Erase(title, L" (s)");
-      Erase(title, L" (d)");
-      */
-      break;
-    // Crunchyroll
-    case kStreamCrunchyroll:
-      EraseLeft(title, L"Crunchyroll - Watch ");
-      EraseRight(title, L" - Movie - Movie");
-      break;
-    // DAISUKI
-    case kStreamDaisuki: {
-      EraseRight(title, L" - DAISUKI");
-      auto pos = title.rfind(L" - ");
-      if (pos != title.npos) {
-        title = title.substr(pos + 3) + L" - " + title.substr(1, pos);
-      } else {
-        title.clear();
-      }
-      break;
-    }
-    // Veoh
-    case kStreamVeoh:
-      EraseLeft(title, L"Watch Videos Online | ");
-      EraseRight(title, L" | Veoh.com");
-      break;
-    // Viz Anime
-    case kStreamViz:
-      EraseLeft(title, L"VIZ.com - NEON ALLEY - ");
-      EraseRight(title, L" (DUB)");
-      EraseRight(title, L" (SUB)");
-      break;
-    // YouTube
-    case kStreamYoutube:
-      EraseLeft(title, L"\u25B6 ");  // black right pointing triangle
-      EraseRight(title, L" - YouTube");
-      break;
-    // Some other website, or URL is not found
-    default:
-    case kStreamUnknown:
-      title.clear();
-      break;
-  }
+	return std::wstring();
 }
 
 std::wstring MediaPlayers::GetTitleFromStreamingMediaProvider(
     const std::wstring& url,
     std::wstring& title) {
-  StreamingVideoProvider stream_provider = kStreamUnknown;
+  
+	if (url.empty() || title.empty())
+		return std::wstring();
 
-  // Check URL for known streaming video providers
-  if (!url.empty()) {
-    for (int i = kStreamFirst; i < kStreamLast; i++) {
-      auto stream = static_cast<StreamingVideoProvider>(i);
-      if (IsStreamSettingEnabled(stream)) {
-        if (MatchStreamUrl(stream, url)) {
-          stream_provider = stream;
-          break;
-        }
-      }
-    }
-  }
+	StreamProviderParserRaii parser = m_streamProviderFactory.createStreamProviderParser(url, title);
 
-  // Clean-up title
-  CleanStreamTitle(stream_provider, title);
-
-  return title;
+	if (parser)
+		return parser->parseTitle();
+	else
+		return std::wstring();	
 }

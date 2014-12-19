@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "base/accessibility.h"
+#include "track/stream_provider_parser.h"
 
 enum MediaPlayerModes {
   kMediaModeWindowTitle,
@@ -87,6 +88,8 @@ public:
   std::wstring GetTitleFromBrowser(HWND hwnd);
   std::wstring GetTitleFromStreamingMediaProvider(const std::wstring& url, std::wstring& title);
 
+  const Track::StreamProviderParserFactory& GetStreamProviderParserFactory() const;
+
 public:
   std::vector<MediaPlayer> items;
 
@@ -101,6 +104,8 @@ private:
 
   std::wstring current_title_;
   bool title_changed_;
+
+  Track::StreamProviderParserFactory m_streamProviderFactory;
 };
 
 extern MediaPlayers MediaPlayers;

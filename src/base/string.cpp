@@ -259,6 +259,13 @@ bool SearchRegex(const wstring& str, const wstring& pattern) {
   return std::regex_search(str, std::wregex(pattern));
 }
 
+std::wstring FirstMatchRegex(const wstring& str, const wstring& pattern) {
+	std::wsmatch match;
+	if (std::regex_match(str.cbegin(), str.cend(), match, std::wregex(pattern)))
+		return match[1]; //first capture group
+	return std::wstring();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 size_t LongestCommonSubsequenceLength(const wstring& str1,

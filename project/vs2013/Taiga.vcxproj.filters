@@ -496,6 +496,12 @@
     <ClCompile Include="..\..\src\win\ctrl\win_ctrl_treeview.cpp">
       <Filter>win\ctrl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\track\stream_provider_parser.cpp">
+      <Filter>track</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\base\html_fetch.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\base\accessibility.h">
@@ -911,6 +917,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\win\ctrl\win_ctrl.h">
       <Filter>win\ctrl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\track\stream_provider_parser.h">
+      <Filter>track</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\base\html_fetch.h">
+      <Filter>base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

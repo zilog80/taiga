@@ -374,3 +374,58 @@
 		<engine>WebKit</engine>
 	</player>
 </media_players>
+
+<media_providers>
+	<!-- Anime Lab -->
+	<provider>
+		<name>Anime Lab</name>
+		<enabled>1</enabled>
+		<url>animelab\.com/player/</url>
+		<title source="window_title">AnimeLab - (.+)</title>
+	</provider>
+	<!-- Anime News Network -->
+	<provider>
+		<name>Anime News Network</name>
+		<enabled>1</enabled>
+		<url>animenewsnetwork\.com/video/[0-9]+</url>
+		<title source="window_title">(.+) \(.\).*</title>
+		<episode_number source="window_title">.*ep.([0-9]+).*</episode_number>
+	</provider>
+	<!-- Crunchyroll -->
+	<provider>
+		<name>Crunchyroll</name>
+		<enabled>1</enabled>
+		<url>crunchyroll.+(episode-[0-9]+)?.*(movie)?-[0-9]+</url>
+		<title source="window_title">Crunchyroll - Watch (.+) -.*</title>
+	</provider>
+	<!-- DAISUKI -->
+	<provider>
+		<name>DAISUKI</name>
+		<enabled>1</enabled>
+		<url>daisuki\.net/anime/watch/</url>
+		<title source="window_title">.*- (.+) - DAISUKI.*</title>
+		<episode_number source="window_title">#([0-9]+).*</episode_number>
+	</provider>
+	<!-- Veoh -->
+	<provider>
+		<name>Veoh</name>
+		<enabled>1</enabled>
+		<url>veoh.com/watch/</url>
+		<title source="window_title">.*\| (.+) \|.*</title>
+	</provider>
+	<!-- Viz -->
+	<provider>
+		<name>Viz</name>
+		<enabled>1</enabled>
+		<url>viz\.com/anime/streaming/</url>
+		<title source="window_title">.*- (.+) Episode.*</title>
+		<episode_number source="window_title">.*Episode ([0-9]+).*</episode_number>
+	</provider>
+	<!-- YouTube -->
+	<provider>
+		<name>YouTube</name>
+		<enabled>1</enabled>
+		<url>youtube.com/watch</url>
+		<title source="window_title">▶ (.+)- YouTube.*</title>
+	</provider>
+</media_providers>
